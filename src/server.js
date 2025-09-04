@@ -1,8 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const pino = require('pino-http')();
-const { initMongoConnection } = require('./db/initMongoConnection');
-const contactsController = require('./controllers/contactsController');
+const contactsController = require('./controllers/contactsController'); // Import contactsController
 
 const setupServer = () => {
     const app = express();
@@ -15,7 +14,7 @@ const setupServer = () => {
         res.send('Server is running');
     });
 
-    app.get('/contacts', contactsController.getAllContacts);
+    app.get('/contacts', contactsController.getAllContacts); // Use contactsController
     app.get('/contacts/:contactId', contactsController.getContactById);
 
     app.use((req, res, next) => {
@@ -28,9 +27,4 @@ const setupServer = () => {
     });
 };
 
-const start = async () => {
-    await initMongoConnection();
-    setupServer();
-};
-
-module.exports = { start };
+module.exports = setupServer;
