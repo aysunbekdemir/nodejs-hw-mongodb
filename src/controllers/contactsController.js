@@ -6,7 +6,7 @@ const getAllContacts = async (req, res) => {
         res.status(200).json({
             status: 200,
             message: 'Successfully found contacts!',
-            data: contacts,
+            data: contacts, // Veritabanından dönen iletişimler
         });
     } catch (error) {
         res.status(500).json({
