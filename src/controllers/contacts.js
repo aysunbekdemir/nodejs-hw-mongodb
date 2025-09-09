@@ -1,13 +1,32 @@
 const contactsService = require('../services/contacts');
 const createError = require('http-errors');
 
-const getAllContacts = async (req, res) => {
-    const contacts = await contactsService.fetchAllContacts();
-    res.status(200).json({
-        status: 200,
-        message: 'Successfully found contacts!',
-        data: contacts,
-    });
+const getAllContacts = async (req, res, next) => {
+    try {
+        const { page = 1, perPage = 10, sortBy = 'name', sortOrder = 'asc' } = req.query;
+
+        const skip = (page - 1) * perPage;
+        const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+        const totalItems = await Contact.countDocuments();
+        const contacts = await Contact.find().skip(skip).limit(Number(perPage)).sort(sort);
+
+        res.status(200).json({
+            status: 200,
+            message: 'Successfully found contacts!',
+            data: {
+                data: contacts,
+                page: Number(page),
+                perPage: Number(perPage),
+                totalItems,
+                totalPages: Math.ceil(totalItems / perPage),
+                hasPreviousPage: page > 1,
+                hasNextPage: page * perPage < totalItems,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
 };
 
 const getContactById = async (req, res) => {
