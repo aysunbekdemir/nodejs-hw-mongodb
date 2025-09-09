@@ -1,5 +1,6 @@
 const contactsService = require('../services/contacts');
 const createError = require('http-errors');
+const Contact = require('../db/models/Contact');
 
 const getAllContacts = async (req, res) => {
     const contacts = await contactsService.fetchAllContacts();
@@ -25,13 +26,28 @@ const getContactById = async (req, res) => {
     });
 };
 
-const createContact = async (req, res) => {
-    const newContact = await contactsService.createContact(req.body);
-    res.status(201).json({
-        status: 201,
-        message: 'Successfully created a contact!',
-        data: newContact,
-    });
+const createContact = async (req, res, next) => {
+    try {
+        const { name, phoneNumber, email, isFavourite, contactType } = req.body;
+        const userId = req.user._id; // Ensure userId is included
+
+        const newContact = await Contact.create({
+            name,
+            phoneNumber,
+            email,
+            isFavourite,
+            contactType,
+            userId,
+        });
+
+        res.status(201).json({
+            status: 201,
+            message: 'Successfully created a contact!',
+            data: newContact,
+        });
+    } catch (error) {
+        next(error);
+    }
 };
 
 const updateContact = async (req, res) => {
@@ -42,6 +58,7 @@ const updateContact = async (req, res) => {
         throw createError(404, 'Contact not found');
     }
 
+    
     res.status(200).json({
         status: 200,
         message: 'Successfully patched a contact!',
