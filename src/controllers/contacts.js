@@ -42,6 +42,7 @@ const updateContact = async (req, res) => {
         throw createError(404, 'Contact not found');
     }
 
+    
     res.status(200).json({
         status: 200,
         message: 'Successfully patched a contact!',
