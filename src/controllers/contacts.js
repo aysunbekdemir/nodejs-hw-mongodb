@@ -1,13 +1,19 @@
 const contactsService = require('../services/contacts');
 const createError = require('http-errors');
 
-const getAllContacts = async (req, res) => {
-    const contacts = await contactsService.fetchAllContacts();
-    res.status(200).json({
-        status: 200,
-        message: 'Successfully found contacts!',
-        data: contacts,
-    });
+const getAllContacts = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const contacts = await contactsService.fetchAllContacts(userId);
+
+        res.status(200).json({
+            status: 200,
+            message: 'Successfully found contacts!',
+            data: contacts,
+        });
+    } catch (error) {
+        next(error);
+    }
 };
 
 const getContactById = async (req, res) => {
@@ -25,13 +31,28 @@ const getContactById = async (req, res) => {
     });
 };
 
-const createContact = async (req, res) => {
-    const newContact = await contactsService.createContact(req.body);
-    res.status(201).json({
-        status: 201,
-        message: 'Successfully created a contact!',
-        data: newContact,
-    });
+const createContact = async (req, res, next) => {
+    try {
+        const { name, phoneNumber, email, isFavourite, contactType } = req.body;
+        const userId = req.user._id;
+
+        const newContact = await contactsService.createContact({
+            name,
+            phoneNumber,
+            email,
+            isFavourite,
+            contactType,
+            userId,
+        });
+
+        res.status(201).json({
+            status: 201,
+            message: 'Successfully created a contact!',
+            data: newContact,
+        });
+    } catch (error) {
+        next(error);
+    }
 };
 
 const updateContact = async (req, res) => {
