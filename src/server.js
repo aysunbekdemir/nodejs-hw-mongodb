@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const pino = require('pino-http')();
-const contactsRouter = require('./routers/contacts');
 const authRouter = require('./routers/auth');
+const contactsRouter = require('./routers/contacts');
+const authenticate = require('./middlewares/authenticate');
+const notFoundHandler = require('./middlewares/notFoundHandler');
+const errorHandler = require('./middlewares/errorHandler');
 
 const setupServer = () => {
     const app = express();
@@ -11,12 +14,14 @@ const setupServer = () => {
     app.use(pino);
     app.use(express.json());
 
-    app.use('/contacts', contactsRouter);
     app.use('/auth', authRouter);
+    app.use('/contacts', authenticate, contactsRouter);
 
-    app.use((req, res, next) => {
-        res.status(404).json({ message: 'Not found' });
-    });
+    // Handle undefined routes
+    app.use(notFoundHandler);
+
+    // Global error handler
+    app.use(errorHandler);
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
