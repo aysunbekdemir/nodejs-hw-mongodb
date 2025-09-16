@@ -7,9 +7,9 @@ const { contactSchema } = require('../db/models/Contact');
 
 const router = express.Router();
 
+router.post('/', validateBody, contactsController.createContact);
 router.get('/', ctrlWrapper(contactsController.getAllContacts));
 router.get('/:contactId', isValidId, ctrlWrapper(contactsController.getContactById));
-router.post('/', validateBody, contactsController.createContact);
 router.patch('/:contactId', isValidId, validateBody(contactSchema), ctrlWrapper(contactsController.updateContact));
 router.delete('/:contactId', isValidId, ctrlWrapper(contactsController.deleteContact));
 
