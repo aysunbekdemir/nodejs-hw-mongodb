@@ -9,7 +9,7 @@ const setupServer = () => {
 
     app.use(cors());
     app.use(pino);
-    app.use(express.json());
+    app.use(express.json()); // JSON parse middleware
 
     app.use('/contacts', authenticate, contactsRouter);
 
@@ -17,7 +17,7 @@ const setupServer = () => {
         res.status(404).json({ message: 'Not found' });
     });
 
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 4000; // Changed default port to 4000
     app.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
     });

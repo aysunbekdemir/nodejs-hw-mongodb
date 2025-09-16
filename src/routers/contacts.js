@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get('/', ctrlWrapper(contactsController.getAllContacts));
 router.get('/:contactId', isValidId, ctrlWrapper(contactsController.getContactById));
-router.post('/', validateBody(contactSchema), ctrlWrapper(contactsController.createContact));
+router.post('/', validateBody, contactsController.createContact);
 router.patch('/:contactId', isValidId, validateBody(contactSchema), ctrlWrapper(contactsController.updateContact));
 router.delete('/:contactId', isValidId, ctrlWrapper(contactsController.deleteContact));
 
