@@ -1,5 +1,4 @@
-import { Contact } from '../db/models/contact.js';
-import { calculatePaginationData } from '../utils/calculatePaginationData.js';
+import { Contact } from '../db/models/Contact.js';
 
 export const getContacts = async ({
   page,
@@ -11,59 +10,46 @@ export const getContacts = async ({
 }) => {
   const skip = (page - 1) * perPage;
 
-  const contactsQuery = Contact.find();
-  contactsQuery.where('userId').equals(userId);
+  const contactsQuery = Contact.find({ ...filter, userId });
 
-  if (filter.contactType) {
-    contactsQuery.where('contactType').equals(filter.contactType);
-  }
-  if (typeof filter.isFavourite === 'boolean') {
-    contactsQuery.where('isFavourite').equals(filter.isFavourite);
-  }
+  const totalItems = await Contact.countDocuments({ ...filter, userId });
+  const totalPages = Math.ceil(totalItems / perPage);
 
-  const [contacts, totalItems] = await Promise.all([
-    contactsQuery
-      .skip(skip)
-      .limit(perPage)
-      .sort({ [sortBy]: sortOrder })
-      .exec(),
-    Contact.countDocuments({ userId, ...filter }),
-  ]);
-
-  const paginationData = calculatePaginationData(totalItems, perPage, page);
+  const data = await contactsQuery
+    .skip(skip)
+    .limit(perPage)
+    .sort({ [sortBy]: sortOrder });
 
   return {
-    data: contacts,
-    ...paginationData,
+    data,
+    page,
+    perPage,
+    totalItems,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
   };
 };
 
-export const getContactById = async (contactId, userId) => {
-  const contact = await Contact.findOne({ _id: contactId, userId });
-  return contact;
+export const getContactById = (contactId, userId) => {
+  return Contact.findOne({ _id: contactId, userId });
 };
 
-export const createContact = async (payload) => {
-  const contact = await Contact.create(payload);
-  return contact;
+export const createContact = (data) => {
+  return Contact.create(data);
 };
 
-export const updateContact = async (contactId, userId, payload) => {
+export const updateContact = async (contactId, userId, data) => {
   const rawResult = await Contact.findOneAndUpdate(
     { _id: contactId, userId },
-    payload,
-    {
-      new: true,
-      includeResultMetadata: true,
-    },
+    data,
+    { new: true, runValidators: true },
   );
 
-  if (!rawResult || !rawResult.value) {
-    return null;
-  }
+  if (!rawResult) return null;
 
   return {
-    contact: rawResult.value,
+    contact: rawResult,
   };
 };
 

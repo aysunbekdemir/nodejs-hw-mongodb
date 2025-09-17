@@ -3,48 +3,33 @@ const SORT_ORDER = {
   DESC: 'desc',
 };
 
-export const parsePaginationParams = (query) => {
-  const { page, perPage } = query;
-
-  const parsedPage = parseInt(page);
-  const parsedPerPage = parseInt(perPage);
-
-  const pageAsNumber =
-    !Number.isNaN(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const perPageAsNumber =
-    !Number.isNaN(parsedPerPage) && parsedPerPage > 0 ? parsedPerPage : 10;
+const parsePaginationParams = ({ page, perPage }) => {
+  const parsedPage = parseInt(page, 10);
+  const parsedPerPage = parseInt(perPage, 10);
 
   return {
-    page: pageAsNumber,
-    perPage: perPageAsNumber,
+    page: isNaN(parsedPage) || parsedPage <= 0 ? 1 : parsedPage,
+    perPage: isNaN(parsedPerPage) || parsedPerPage <= 0 ? 10 : parsedPerPage,
   };
 };
 
-export const parseSortParams = (query) => {
-  const { sortBy, sortOrder } = query;
-
-  const parsedSortOrder =
-    sortOrder && Object.values(SORT_ORDER).includes(sortOrder.toLowerCase())
-      ? sortOrder
-      : SORT_ORDER.ASC;
-
+const parseSortParams = ({ sortBy, sortOrder }) => {
+  const order = ['asc', 'desc'].includes(sortOrder) ? sortOrder : 'asc';
   return {
     sortBy: sortBy || '_id',
-    sortOrder: parsedSortOrder,
+    sortOrder: order,
   };
 };
 
-export const parseFilterParams = (query) => {
-  const { contactType, isFavourite } = query;
+const parseFilterParams = ({ contactType, isFavourite }) => {
   const filter = {};
-
-  if (contactType) {
+  if (['work', 'home', 'personal'].includes(contactType)) {
     filter.contactType = contactType;
   }
-
-  if (['true', 'false'].includes(isFavourite)) {
+  if (isFavourite !== undefined) {
     filter.isFavourite = isFavourite === 'true';
   }
-
   return filter;
 };
+
+export { parsePaginationParams, parseSortParams, parseFilterParams };
