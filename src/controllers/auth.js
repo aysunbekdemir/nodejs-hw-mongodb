@@ -1,4 +1,9 @@
-import { registerUser, loginUser, logoutUser } from '../services/auth.js';
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshSession,
+} from '../services/auth.js';
 import createHttpError from 'http-errors';
 
 export const registerUserController = async (req, res) => {
@@ -42,8 +47,25 @@ export const logoutUserController = async (req, res) => {
     throw createHttpError(401, 'Refresh token is missing');
   }
 
-  await logoutUser(refreshToken);
+  await logoutUser(req.cookies.refreshToken);
 
   res.clearCookie('refreshToken');
   res.status(204).send();
+};
+
+export const refreshSessionController = async (req, res) => {
+  const { session, accessToken } = await refreshSession(req.cookies);
+
+  res.cookie('refreshToken', session.refreshToken, {
+    httpOnly: true,
+    expires: session.refreshTokenValidUntil,
+  });
+
+  res.json({
+    status: 200,
+    message: 'Successfully refreshed a session!',
+    data: {
+      accessToken,
+    },
+  });
 };

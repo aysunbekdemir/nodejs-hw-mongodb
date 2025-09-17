@@ -3,6 +3,7 @@ import {
   registerUserController,
   loginUserController,
   logoutUserController,
+  refreshSessionController,
 } from '../controllers/auth.js';
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 import { validateBody } from '../middlewares/validateBody.js';
@@ -23,5 +24,7 @@ router.post(
 );
 
 router.post('/logout', ctrlWrapper(logoutUserController));
+
+router.post('/refresh', ctrlWrapper(refreshSessionController));
 
 export { router as authRouter };
