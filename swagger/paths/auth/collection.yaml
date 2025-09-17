@@ -1,0 +1,48 @@
+get:
+  tags:
+    - Contacts
+  summary: Get all contacts
+  operationId: getContacts
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+    - name: limit
+      in: query
+      schema:
+        type: integer
+        default: 10
+    - name: contactType
+      in: query
+      schema:
+        type: string
+        enum: [work, home, personal]
+    - name: isFavourite
+      in: query
+      schema:
+        type: boolean
+  responses:
+    '200':
+      description: A list of contacts.
+post:
+  tags:
+    - Contacts
+  summary: Create a new contact
+  operationId: createContact
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/contact.yaml'
+  responses:
+    '201':
+      description: Contact created successfully.
+    '400':
+      description: Bad request.

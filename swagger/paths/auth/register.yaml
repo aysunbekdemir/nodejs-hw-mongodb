@@ -1,0 +1,48 @@
+post:
+  tags:
+    - Auth
+  summary: Register a new user
+  operationId: registerUser
+  description: Creates a new user account.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas.yaml#/RegisterUserRequestBody'
+  responses:
+    '201':
+      description: User registered successfully.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: integer
+                example: 201
+              message:
+                type: string
+                example: User registered successfully
+              data:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: John Doe
+                  email:
+                    type: string
+                    example: john.doe@example.com
+    '400':
+      description: Bad Request
+      $ref: '../../components/responses.yaml#/BadRequest'
+    '409':
+      description: Conflict - User with this email already exists.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: User with email john.doe@example.com already exists

@@ -1,0 +1,75 @@
+Contact:
+  type: object
+  properties:
+    _id:
+      type: string
+      example: 65e4c66504354a3f22738738
+    name:
+      type: string
+      example: John Doe
+    phoneNumber:
+      type: string
+      example: '123-456-7890'
+    email:
+      type: string
+      example: john.doe@example.com
+    isFavourite:
+      type: boolean
+      example: false
+    contactType:
+      type: string
+      enum: [work, home, personal]
+      example: work
+    userId:
+      type: string
+      example: 65e4c66504354a3f22738737
+
+RegisterUserRequestBody:
+  type: object
+  properties:
+    name:
+      type: string
+      example: John Doe
+    email:
+      type: string
+      example: john.doe@example.com
+    password:
+      type: string
+      example: 'password123'
+  required:
+    - name
+    - email
+    - password
+
+LoginUserRequestBody:
+  type: object
+  properties:
+    email:
+      type: string
+      example: john.doe@example.com
+    password:
+      type: string
+      example: 'password123'
+  required:
+    - email
+    - password
+
+ContactRequestBody:
+  type: object
+  properties:
+    name:
+      type: string
+      example: John Doe
+    phoneNumber:
+      type: string
+      example: '123-456-7890'
+    email:
+      type: string
+      example: john.doe@example.com
+    isFavourite:
+      type: boolean
+      example: false
+    contactType:
+      type: string
+      enum: [work, home, personal]
+      example: work

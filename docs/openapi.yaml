@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info:
+  version: 1.0.0
+  title: Contacts API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  description: >
+    API for managing contacts.
+tags:
+  - name: Contacts
+    description: Operations about contacts
+  - name: Auth
+    description: User authentication operations
+servers:
+  - url: http://localhost:4000
+  - url: https://nodejs-hw-mongodb-rsc2.onrender.com # Burayı kendi render.com linkinizle güncelleyin
+paths:
+  /api/auth/register:
+    $ref: ../swagger/paths/auth/register.yaml
+  /api/auth/login:
+    $ref: ../swagger/paths/auth/login.yaml
+  /api/auth/logout:
+    $ref: ../swagger/paths/auth/logout.yaml
+  /api/contacts:
+    $ref: ../swagger/paths/contacts/index.yaml
+  /api/contacts/{contactId}:
+    $ref: ../swagger/paths/contacts/{contactId}/index.yaml
+components:
+  schemas:
+    $ref: ../swagger/components/schemas.yaml
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

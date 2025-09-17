@@ -1,29 +1,73 @@
-const Contact = require('../db/models/Contact');
+import { Contact } from '../db/models/contact.js';
+import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 
-const fetchAllContacts = async () => {
-    return await Contact.find(); // Veritabanındaki tüm iletişimleri döndür
+export const getContacts = async ({
+  page,
+  perPage,
+  sortBy,
+  sortOrder,
+  filter,
+  userId,
+}) => {
+  const skip = (page - 1) * perPage;
+
+  const contactsQuery = Contact.find();
+  contactsQuery.where('userId').equals(userId);
+
+  if (filter.contactType) {
+    contactsQuery.where('contactType').equals(filter.contactType);
+  }
+  if (typeof filter.isFavourite === 'boolean') {
+    contactsQuery.where('isFavourite').equals(filter.isFavourite);
+  }
+
+  const [contacts, totalItems] = await Promise.all([
+    contactsQuery
+      .skip(skip)
+      .limit(perPage)
+      .sort({ [sortBy]: sortOrder })
+      .exec(),
+    Contact.countDocuments({ userId, ...filter }),
+  ]);
+
+  const paginationData = calculatePaginationData(totalItems, perPage, page);
+
+  return {
+    data: contacts,
+    ...paginationData,
+  };
 };
 
-const fetchContactById = async (contactId) => {
-    return await Contact.findById(contactId);
+export const getContactById = async (contactId, userId) => {
+  const contact = await Contact.findOne({ _id: contactId, userId });
+  return contact;
 };
 
-const createContact = async (contactData) => {
-    return await Contact.create(contactData);
+export const createContact = async (payload) => {
+  const contact = await Contact.create(payload);
+  return contact;
 };
 
-const updateContact = async (contactId, updateData) => {
-    return await Contact.findByIdAndUpdate(contactId, updateData, { new: true });
+export const updateContact = async (contactId, userId, payload) => {
+  const rawResult = await Contact.findOneAndUpdate(
+    { _id: contactId, userId },
+    payload,
+    {
+      new: true,
+      includeResultMetadata: true,
+    },
+  );
+
+  if (!rawResult || !rawResult.value) {
+    return null;
+  }
+
+  return {
+    contact: rawResult.value,
+  };
 };
 
-const deleteContact = async (contactId) => {
-    return await Contact.findByIdAndDelete(contactId);
-};
-
-module.exports = { 
-    fetchAllContacts, 
-    fetchContactById,
-    createContact,
-    updateContact,
-    deleteContact,
+export const deleteContact = async (contactId, userId) => {
+  const contact = await Contact.findOneAndDelete({ _id: contactId, userId });
+  return contact;
 };

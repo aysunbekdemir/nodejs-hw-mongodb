@@ -1,13 +1,15 @@
-const createError = require('http-errors');
+// src/middlewares/validateBody.js
 
-const validateBody = (req, res, next) => {
-    if (!req.body || typeof req.body !== 'object' || Object.keys(req.body).length === 0) {
-        return next(createError(400, 'Request body is missing or invalid'));
-    }
-    if (!req.body.email) {
-        return next(createError(400, 'Email is required'));
-    }
+import createHttpError from 'http-errors';
+
+export const validateBody = (schema) => async (req, res, next) => {
+  try {
+    await schema.validateAsync(req.body, { abortEarly: false });
     next();
+  } catch (err) {
+    const error = createHttpError(400, 'Bad Request', {
+      details: err.details.map((detail) => detail.message),
+    });
+    next(error);
+  }
 };
-
-module.exports = validateBody;

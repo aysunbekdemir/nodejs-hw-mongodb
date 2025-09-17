@@ -1,0 +1,32 @@
+NotFound:
+  description: The specified resource was not found.
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          message:
+            type: string
+            example: Contact not found
+
+BadRequest:
+  description: Bad request, often due to missing a required parameter.
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          message:
+            type: string
+            example: '\"name\" is required'
+
+Unauthorized:
+  description: Unauthorized, token is missing or invalid.
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          message:
+            type: string
+            example: Not authorized

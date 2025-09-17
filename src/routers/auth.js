@@ -1,15 +1,27 @@
-const express = require('express');
-const ctrlWrapper = require('../utils/ctrlWrapper');
-const authController = require('../controllers/auth');
-const validateBody = require('../middlewares/validateBody');
-const { registerSchema, loginSchema } = require('../db/models/User');
+import { Router } from 'express';
+import {
+  registerUserController,
+  loginUserController,
+  logoutUserController,
+} from '../controllers/auth.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import { validateBody } from '../middlewares/validateBody.js';
+import { registerUserSchema, loginUserSchema } from '../validation/auth.js';
 
-const router = express.Router();
+const router = Router();
 
-router.post('/register', validateBody(registerSchema), authController.registerUser);
-router.post('/login', validateBody(loginSchema), authController.loginUser);
-router.post('/refresh', authController.refreshSession);
-router.post('/logout', authController.logoutUser);
-router.post('/send-reset-email', validateBody, ctrlWrapper(authController.sendResetEmail));
+router.post(
+  '/register',
+  validateBody(registerUserSchema),
+  ctrlWrapper(registerUserController),
+);
 
-module.exports = router;
+router.post(
+  '/login',
+  validateBody(loginUserSchema),
+  ctrlWrapper(loginUserController),
+);
+
+router.post('/logout', ctrlWrapper(logoutUserController));
+
+export { router as authRouter };
