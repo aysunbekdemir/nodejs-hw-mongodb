@@ -1,29 +1,33 @@
-const Contact = require('../db/models/Contact');
+import { Contact } from '../db/models/Contact.js';
 
-const fetchAllContacts = async () => {
-    return await Contact.find(); // Veritabanındaki tüm iletişimleri döndür
+export const getAllContacts = (userId) => {
+  return Contact.find({ userId });
 };
 
-const fetchContactById = async (contactId) => {
-    return await Contact.findById(contactId);
+export const getContactById = (contactId, userId) => {
+  return Contact.findOne({ _id: contactId, userId });
 };
 
-const createContact = async (contactData) => {
-    return await Contact.create(contactData);
+export const createContact = (data, userId) => {
+  return Contact.create({ ...data, userId });
 };
 
-const updateContact = async (contactId, updateData) => {
-    return await Contact.findByIdAndUpdate(contactId, updateData, { new: true });
+export const updateContact = (contactId, data, userId) => {
+  return Contact.findOneAndUpdate(
+    { _id: contactId, userId },
+    data,
+    { new: true, runValidators: true }
+  );
 };
 
-const deleteContact = async (contactId) => {
-    return await Contact.findByIdAndDelete(contactId);
+export const deleteContact = (contactId, userId) => {
+  return Contact.findOneAndDelete({ _id: contactId, userId });
 };
 
-module.exports = { 
-    fetchAllContacts, 
-    fetchContactById,
-    createContact,
-    updateContact,
-    deleteContact,
+export default {
+  getAllContacts,
+  getContactById,
+  createContact,
+  updateContact,
+  deleteContact,
 };

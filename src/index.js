@@ -1,11 +1,12 @@
-// Entry point for the application
-require('dotenv').config(); // Ensure environment variables are loaded
-const { initMongoConnection } = require('./db/initMongoConnection');
-const setupServer = require('./server'); // Correctly import setupServer
+import setupServer from './server.js';
 
-const startApp = async () => {
-    await initMongoConnection();
-    setupServer(); // Call the setupServer function
+const bootstrap = async () => {
+  try {
+    await setupServer();
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
-startApp();
+bootstrap();

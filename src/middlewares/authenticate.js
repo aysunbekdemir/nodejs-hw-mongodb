@@ -1,27 +1,28 @@
-const jwt = require('jsonwebtoken');
-const createHttpError = require('http-errors');
-const User = require('../db/models/User');
+import createHttpError from 'http-errors';
+import jwt from 'jsonwebtoken';
+import { User } from '../db/models/User.js';
+import { env } from '../utils/env.js';
 
-const authenticate = async (req, res, next) => {
-    try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            throw createHttpError(401, 'Authorization header missing or malformed');
-        }
+export const authenticate = async (req, res, next) => {
+  const authHeader = req.get('Authorization');
+  if (!authHeader) {
+    return next(createHttpError(401, 'Authorization header missing'));
+  }
 
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const [bearer, token] = authHeader.split(' ');
+  if (bearer !== 'Bearer' || !token) {
+    return next(createHttpError(401, 'Invalid authorization header'));
+  }
 
-        const user = await User.findById(decoded.id);
-        if (!user) {
-            throw createHttpError(401, 'User not found');
-        }
-
-        req.user = user;
-        next();
-    } catch (error) {
-        next(createHttpError(401, error.message));
+  try {
+    const { id } = jwt.verify(token, env('JWT_SECRET'));
+    const user = await User.findById(id);
+    if (!user) {
+      return next(createHttpError(401, 'Not authorized'));
     }
+    req.user = user;
+    next();
+  } catch (error) {
+    next(createHttpError(401, 'Not authorized'));
+  }
 };
-
-module.exports = authenticate;

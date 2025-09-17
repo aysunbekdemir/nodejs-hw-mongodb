@@ -1,13 +1,17 @@
-const express = require('express');
-const authController = require('../controllers/auth');
-const validateBody = require('../middlewares/validateBody');
-const { registerSchema, loginSchema } = require('../db/models/User');
+import { Router } from 'express';
+import {
+  registerUser,
+  loginUser,
+  refreshSession,
+  logoutUser,
+} from '../controllers/auth.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 
-const router = express.Router();
+const router = Router();
 
-router.post('/register', validateBody(registerSchema), authController.registerUser);
-router.post('/login', validateBody(loginSchema), authController.loginUser);
-router.post('/refresh', authController.refreshSession);
-router.post('/logout', authController.logoutUser);
+router.post('/register', ctrlWrapper(registerUser));
+router.post('/login', ctrlWrapper(loginUser));
+router.post('/refresh', ctrlWrapper(refreshSession));
+router.post('/logout', ctrlWrapper(logoutUser));
 
-module.exports = router;
+export default router;
