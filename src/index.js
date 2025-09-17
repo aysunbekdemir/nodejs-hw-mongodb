@@ -3,7 +3,7 @@ import 'dotenv/config'; // Ensure environment variables are loaded
 import express from 'express';
 import { initMongoConnection } from './db/initMongoConnection.js';
 import setupServer from './server.js';
-import { Contact } from './db/models/Contact.js';
+import { Contact } from './db/models/contact.js';
 
 const app = express();
 
