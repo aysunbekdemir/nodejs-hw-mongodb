@@ -1,0 +1,25 @@
+type: object
+required:
+  - name
+  - phoneNumber
+properties:
+  _id:
+    type: string
+    example: 60d0fe4f5311236168a109ca
+  name:
+    type: string
+    example: John Doe
+  phoneNumber:
+    type: string
+    example: '123-456-7890'
+  email:
+    type: string
+    format: email
+    example: john.doe@example.com
+  isFavourite:
+    type: boolean
+    example: false
+  contactType:
+    type: string
+    enum: [work, home, personal]
+    example: work

@@ -1,33 +1,50 @@
-const express = require('express');
-const cors = require('cors');
-const pino = require('pino-http')();
-const contactsRouter = require('./routers/contacts');
-const authenticate = require('./middlewares/authenticate');
+import express from 'express';
+import pino from 'pino-http';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { env } from './utils/env.js';
+import { initMongoConnection } from './db/initMongoConnection.js';
+import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { authRouter } from './routers/auth.js';
+import { contactsRouter } from './routers/contacts.js';
+import swaggerUi from 'swagger-ui-express';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const setupServer = () => {
-    const app = express();
+const bootstrap = async () => {
+  await initMongoConnection();
 
-    // Middleware'leri doğru sırada tanımlayın
-    app.use(cors());
-    app.use(pino);
-    app.use(express.json()); // JSON formatındaki istek gövdelerini ayrıştırmak için
-    app.use(express.urlencoded({ extended: true })); // URL-encoded istek gövdelerini ayrıştırmak için
+  const app = express();
 
-    // Route'ları tanımlayın
-    app.use('/api/contacts', contactsRouter);
-    app.use('/contacts', authenticate, contactsRouter);
+  app.use(pino({ transport: { target: 'pino-pretty' } }));
+  app.use(cors());
+  app.use(cookieParser());
+  app.use(express.json());
 
-    // 404 handler
-    app.use((req, res, next) => {
-        res.status(404).json({ message: 'Not found' });
-    });
+  const swaggerDocsPath = path.join(process.cwd(), 'docs', 'swagger.json');
+  try {
+    const swaggerFile = fs.readFileSync(swaggerDocsPath, 'utf8');
+    const swaggerDocs = JSON.parse(swaggerFile);
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+  } catch (err) {
+    console.error('Failed to load Swagger docs, run "npm run build-docs"', err);
+  }
 
-    const PORT = process.env.PORT || 4000;
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-    });
+  app.use('/api/auth', authRouter);
+  app.use('/api/contacts', contactsRouter);
+
+  app.use(notFoundHandler);
+
+  app.use(errorHandler);
+
+  const PORT = env('PORT', 4000);
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 };
 
-module.exports = setupServer;
-
-
+bootstrap().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});

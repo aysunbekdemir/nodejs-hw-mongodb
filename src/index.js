@@ -1,9 +1,9 @@
 // Entry point for the application
-require('dotenv').config(); // Ensure environment variables are loaded
-const express = require('express');
-const { initMongoConnection } = require('./db/initMongoConnection');
-const setupServer = require('./server');
-const Contact = require('./db/models/Contact');
+import 'dotenv/config'; // Ensure environment variables are loaded
+import express from 'express';
+import { initMongoConnection } from './db/initMongoConnection.js';
+import setupServer from './server.js';
+import { Contact } from './db/models/Contact.js';
 
 const app = express();
 
@@ -14,8 +14,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const startApp = async () => {
-    await initMongoConnection(); // MongoDB bağlantısını başlat
-    setupServer(); // Sunucuyu başlat
+    await initMongoConnection(); // Start MongoDB connection
+    setupServer(); // Start the server
 };
 
 const checkContacts = async () => {
