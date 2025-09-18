@@ -1,39 +1,38 @@
 import express from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
 import pino from 'pino-http';
+import cors from 'cors';
 import { env } from './utils/env.js';
-import { initMongoConnection } from './db/initMongoConnection.js';
 import contactsRouter from './routers/contacts.js';
-import authRouter from './routers/auth.js';
+import authRouter from './routers/auth.js'; // authRouter'ı import edin
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 
-const setupServer = async () => {
-  await initMongoConnection();
+const PORT = env('PORT', '4000');
+
+export const setupServer = () => {
   const app = express();
 
-  app.use(pino({ transport: { target: 'pino-pretty' } }));
-  app.use(cors());
-  app.use(cookieParser());
   app.use(express.json());
+  app.use(cors());
+  app.use(
+    pino({
+      transport: {
+        target: 'pino-pretty',
+      },
+    }),
+  );
 
-  app.use('/api/auth', authRouter);
-  app.use('/api/contacts', contactsRouter);
+  // Ana yönlendiricileri bağlama
+  app.use('/contacts', contactsRouter);
+  app.use('/auth', authRouter); // authRouter'ı sunucuya ekleyin
 
+  // 404 hatası için middleware
   app.use(notFoundHandler);
+
+  // Genel hata işleyici
   app.use(errorHandler);
 
-  const PORT = env('PORT', 4000);
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
 };
-
-export default setupServer;
-setupServer().catch((err) => {
-  console.error('Failed to start server', err);
-  process.exit(1);
-});
-
-

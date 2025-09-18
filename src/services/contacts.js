@@ -1,33 +1,31 @@
 import { Contact } from '../db/models/Contact.js';
 
-export const getAllContacts = (userId) => {
-  return Contact.find({ userId });
+export const getAllContacts = async () => {
+  return await Contact.find();
 };
 
-export const getContactById = (contactId, userId) => {
-  return Contact.findOne({ _id: contactId, userId });
+export const getContactById = async (contactId) => {
+  return await Contact.findById(contactId);
 };
 
-export const createContact = (data, userId) => {
-  return Contact.create({ ...data, userId });
+export const createContact = async (payload) => {
+  return await Contact.create(payload);
 };
 
-export const updateContact = (contactId, data, userId) => {
-  return Contact.findOneAndUpdate(
-    { _id: contactId, userId },
-    data,
-    { new: true, runValidators: true }
+export const updateContact = async (contactId, payload, userId) => {
+  const rawResult = await Contact.findOneAndUpdate(
+    { _id: contactId, userId }, // Sadece o kullanıcıya ait kişiyi bul
+    payload,
+    {
+      new: true,
+      runValidators: true,
+    },
   );
+
+  return rawResult; // Eğer kişi bulunamazsa null dönecektir
 };
 
-export const deleteContact = (contactId, userId) => {
-  return Contact.findOneAndDelete({ _id: contactId, userId });
-};
-
-export default {
-  getAllContacts,
-  getContactById,
-  createContact,
-  updateContact,
-  deleteContact,
+export const deleteContact = async (contactId, userId) => {
+  const contact = await Contact.findOneAndDelete({ _id: contactId, userId });
+  return contact;
 };

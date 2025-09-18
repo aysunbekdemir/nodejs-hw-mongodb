@@ -5,24 +5,28 @@ import { env } from '../utils/env.js';
 
 export const authenticate = async (req, res, next) => {
   const authHeader = req.get('Authorization');
+
   if (!authHeader) {
-    return next(createHttpError(401, 'Authorization header missing'));
+    return next(createHttpError(401, 'Authorization header is missing'));
   }
 
   const [bearer, token] = authHeader.split(' ');
+
   if (bearer !== 'Bearer' || !token) {
-    return next(createHttpError(401, 'Invalid authorization header'));
+    return next(createHttpError(401, 'Authorization header is not of Bearer type'));
   }
 
   try {
-    const { id } = jwt.verify(token, env('JWT_SECRET'));
-    const user = await User.findById(id);
+    const decoded = jwt.verify(token, env('JWT_SECRET'));
+    const user = await User.findById(decoded.id);
+
     if (!user) {
-      return next(createHttpError(401, 'Not authorized'));
+      return next(createHttpError(401, 'User not found'));
     }
+
     req.user = user;
     next();
-  } catch (error) {
-    next(createHttpError(401, 'Not authorized'));
+  } catch (err) {
+    next(createHttpError(401, 'Token is expired or invalid'));
   }
 };
