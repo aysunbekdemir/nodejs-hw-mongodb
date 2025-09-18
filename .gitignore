@@ -1,2 +1,12 @@
-node_modules/
+# Dependencies
+/node_modules
+
+# Environment variables
 .env
+
+# Temporary files
+/temp
+
+# Log files
+*.log
+npm-debug.log*

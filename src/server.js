@@ -3,7 +3,6 @@ import pino from 'pino-http';
 import cors from 'cors';
 import { env } from './utils/env.js';
 import contactsRouter from './routers/contacts.js';
-import authRouter from './routers/auth.js'; // authRouter'ı import edin
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 
@@ -14,22 +13,11 @@ export const setupServer = () => {
 
   app.use(express.json());
   app.use(cors());
-  app.use(
-    pino({
-      transport: {
-        target: 'pino-pretty',
-      },
-    }),
-  );
+  app.use(pino({ transport: { target: 'pino-pretty' } }));
 
-  // Ana yönlendiricileri bağlama
   app.use('/contacts', contactsRouter);
-  app.use('/auth', authRouter); // authRouter'ı sunucuya ekleyin
 
-  // 404 hatası için middleware
   app.use(notFoundHandler);
-
-  // Genel hata işleyici
   app.use(errorHandler);
 
   app.listen(PORT, () => {
