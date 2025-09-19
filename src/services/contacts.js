@@ -1,49 +1,36 @@
-import Contact from '../db/models/contact.js';
-import {
-  savePhotoToCloudinary,
-  deletePhotoFromCloudinary,
-} from './cloudinary.js';
 import createHttpError from 'http-errors';
+import Contact from '../db/models/contact.js';
 
-export const getAllContacts = async (user) => {
-  return await Contact.find({ owner: user._id });
+export const createContact = async (payload) => {
+  const contact = await Contact.create(payload);
+  return contact;
 };
 
-export const getContactById = async (contactId, user) => {
-  return await Contact.findOne({ _id: contactId, owner: user._id });
+export const getContacts = async () => {
+  const contacts = await Contact.find();
+  return contacts;
 };
 
-export const createContact = async (payload, userId, file) => {
-  const photoUrl = file ? await savePhotoToCloudinary(file.path) : null;
-  return await Contact.create({
-    ...payload,
-    photo: photoUrl,
-    owner: userId,
-  });
-};
-
-export const updateContact = async (contactId, payload, userId, file) => {
-  if (file) {
-    const contact = await Contact.findById(contactId);
-    if (contact && contact.photo) {
-      await deletePhotoFromCloudinary(contact.photo);
-    }
-    payload.photo = await savePhotoToCloudinary(file.path);
+export const getContactById = async (id) => {
+  const contact = await Contact.findById(id);
+  if (!contact) {
+    throw createHttpError(404, 'Contact not found');
   }
-  return await Contact.findOneAndUpdate(
-    { _id: contactId, owner: userId },
-    payload,
-    { new: true },
-  );
+  return contact;
 };
 
-export const deleteContact = async (contactId, user) => {
-  const contact = await Contact.findOneAndDelete({
-    _id: contactId,
-    owner: user._id,
-  });
-  if (contact && contact.photo) {
-    await deletePhotoFromCloudinary(contact.photo);
+export const updateContact = async (id, payload) => {
+  const contact = await Contact.findByIdAndUpdate(id, payload, { new: true });
+  if (!contact) {
+    throw createHttpError(404, 'Contact not found');
+  }
+  return contact;
+};
+
+export const deleteContact = async (id) => {
+  const contact = await Contact.findByIdAndDelete(id);
+  if (!contact) {
+    throw createHttpError(404, 'Contact not found');
   }
   return contact;
 };

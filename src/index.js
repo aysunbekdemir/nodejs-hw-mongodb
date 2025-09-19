@@ -1,9 +1,6 @@
-// Entry point for the application
-import { config } from 'dotenv';
+import 'dotenv/config';
 import initMongoConnection from './db/initMongoConnection.js';
 import setupServer from './server.js';
-
-config(); // Ensure environment variables are loaded
 
 const bootstrap = async () => {
   await initMongoConnection();

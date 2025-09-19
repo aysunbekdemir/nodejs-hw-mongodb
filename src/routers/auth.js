@@ -28,7 +28,7 @@ authRouter.post(
         data: user,
       });
     } catch (error) {
-      next(createHttpError(500, 'User with this email already exists.'));
+      next(createHttpError(409, 'Email already exists'));
     }
   },
 );

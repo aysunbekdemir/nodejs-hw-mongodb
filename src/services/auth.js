@@ -57,9 +57,7 @@ export const sendResetEmail = async (email) => {
     throw createHttpError(404, 'User not found!');
   }
 
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-    expiresIn: '5m',
-  });
+  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '5m' });
   const resetLink = `${process.env.APP_DOMAIN}/reset-password?token=${token}`;
 
   try {
@@ -71,10 +69,7 @@ export const sendResetEmail = async (email) => {
     });
   } catch (error) {
     console.error('Nodemailer Hata Detayı:', error);
-    throw createHttpError(
-      500,
-      'Failed to send the email, please try again later.',
-    );
+    throw createHttpError(500, 'Failed to send the email, please try again later.');
   }
 };
 
