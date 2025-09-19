@@ -1,56 +1,38 @@
+import createHttpError from 'http-errors';
 import Contact from '../db/models/contact.js';
 
-export const getAllContacts = async (filter, sort, pagination, userId) => {
-  const { page, perPage } = pagination;
-  const skip = (page - 1) * perPage;
-
-  const contactsQuery = Contact.find({ ...filter, userId })
-    .sort(sort)
-    .skip(skip)
-    .limit(perPage);
-
-  const contacts = await contactsQuery.exec();
-  const totalItems = await Contact.countDocuments({ ...filter, userId });
-  const totalPages = Math.ceil(totalItems / perPage);
-  const hasPreviousPage = page > 1;
-  const hasNextPage = page < totalPages;
-
-  return {
-    data: contacts,
-    page,
-    perPage,
-    totalItems,
-    totalPages,
-    hasPreviousPage,
-    hasNextPage,
-  };
-};
-
-export const getContactById = async (contactId, userId) => {
-  const contact = await Contact.findOne({ _id: contactId, userId });
+export const createContact = async (payload, userId) => {
+  const contact = await Contact.create({ ...payload, userId });
   return contact;
 };
 
-// Yeni rotalar için gerekli CRUD fonksiyonlarını da eklemelisiniz.
-// Örneğin:
-export const createContact = async (payload, userId) => {
-  const newContact = await Contact.create({ ...payload, userId });
-  return newContact;
+export const getContacts = async (userId) => {
+  const contacts = await Contact.find({ userId });
+  return contacts;
 };
 
-export const deleteContact = async (contactId, userId) => {
-  const deletedContact = await Contact.findOneAndDelete({
-    _id: contactId,
-    userId,
+export const getContactById = async (id, userId) => {
+  const contact = await Contact.findOne({ _id: id, userId });
+  if (!contact) {
+    throw createHttpError(404, 'Contact not found');
+  }
+  return contact;
+};
+
+export const updateContact = async (id, payload, userId) => {
+  const contact = await Contact.findOneAndUpdate({ _id: id, userId }, payload, {
+    new: true,
   });
-  return deletedContact;
+  if (!contact) {
+    throw createHttpError(404, 'Contact not found');
+  }
+  return contact;
 };
 
-export const updateContact = async (contactId, payload, userId) => {
-  const updatedContact = await Contact.findOneAndUpdate(
-    { _id: contactId, userId },
-    payload,
-    { new: true },
-  );
-  return updatedContact;
+export const deleteContact = async (id, userId) => {
+  const contact = await Contact.findOneAndDelete({ _id: id, userId });
+  if (!contact) {
+    throw createHttpError(404, 'Contact not found');
+  }
+  return contact;
 };
