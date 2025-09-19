@@ -27,12 +27,12 @@ export const loginUser = async (payload) => {
       throw createHttpError(401, 'Invalid credentials');
     }
 
-  const oldSession = await Session.findOne({ userId: user._id });
-  if (oldSession) {
-    await oldSession.deleteOne();
-  }
+    const oldSession = await Session.findOne({ userId: user._id });
+    if (oldSession) {
+      await oldSession.deleteOne();
+    }
 
-  const newSession = await createSession(user._id);
+    const newSession = await createSession(user._id);
     console.log('Kullanıcı doğrulandı, oturum oluşturuluyor.'); // Başarılı girişten önce
     return { accessToken: newSession.accessToken };
   } catch (error) {
@@ -54,8 +54,11 @@ export const refreshSession = async (refreshToken) => {
 
   await session.deleteOne();
   const newSession = await createSession(user._id);
-  
-  return { accessToken: newSession.accessToken, newRefreshToken: newSession.refreshToken };
+
+  return {
+    accessToken: newSession.accessToken,
+    newRefreshToken: newSession.refreshToken,
+  };
 };
 
 export const logoutUser = async (refreshToken) => {
@@ -63,8 +66,12 @@ export const logoutUser = async (refreshToken) => {
 };
 
 const createSession = async (userId) => {
-  const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  const refreshToken = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: '15m',
+  });
+  const refreshToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: '30d',
+  });
 
   const session = await Session.create({
     userId,
