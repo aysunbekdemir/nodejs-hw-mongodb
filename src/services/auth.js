@@ -1,84 +1,101 @@
-import bcrypt from 'bcrypt';
-import createHttpError from 'http-errors';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import createHttpError from 'http-errors';
+
 import User from '../db/models/user.js';
 import Session from '../db/models/session.js';
+import sendMail from './sendMail.js';
 
 export const registerUser = async (payload) => {
   const userExists = await User.findOne({ email: payload.email });
   if (userExists) {
-    throw createHttpError(409, 'Email in use');
+    throw createHttpError(409, 'Email already exists');
   }
 
-  const user = await User.create(payload);
-  return user;
+  const hashedPassword = await bcrypt.hash(payload.password, 10);
+
+  const newUser = await User.create({
+    ...payload,
+    password: hashedPassword,
+  });
+
+  return newUser;
 };
 
 export const loginUser = async (payload) => {
-  console.log('Login isteği alındı, e-posta:', payload.email); // Başlangıçta
-  try {
-    const user = await User.findOne({ email: payload.email });
-    if (!user) {
-      throw createHttpError(401, 'Invalid credentials');
-    }
-
-    const passwordMatch = await bcrypt.compare(payload.password, user.password);
-    if (!passwordMatch) {
-      throw createHttpError(401, 'Invalid credentials');
-    }
-
-    const oldSession = await Session.findOne({ userId: user._id });
-    if (oldSession) {
-      await oldSession.deleteOne();
-    }
-
-    const newSession = await createSession(user._id);
-    console.log('Kullanıcı doğrulandı, oturum oluşturuluyor.'); // Başarılı girişten önce
-    return { accessToken: newSession.accessToken };
-  } catch (error) {
-    console.error('Login sırasında hata oluştu:', error); // Hata yakalandığında
-    throw error; // Hatanın yayılmasını sağla
-  }
-};
-
-export const refreshSession = async (refreshToken) => {
-  const session = await Session.findOne({ refreshToken });
-  if (!session) {
-    throw createHttpError(401, 'Session not found');
-  }
-
-  const user = await User.findById(session.userId);
+  const user = await User.findOne({ email: payload.email });
   if (!user) {
-    throw createHttpError(401, 'User not found');
+    throw createHttpError(401, 'Invalid credentials');
   }
 
-  await session.deleteOne();
-  const newSession = await createSession(user._id);
+  const passwordMatch = await bcrypt.compare(payload.password, user.password);
+  if (!passwordMatch) {
+    throw createHttpError(401, 'Invalid credentials');
+  }
 
-  return {
-    accessToken: newSession.accessToken,
-    newRefreshToken: newSession.refreshToken,
-  };
-};
+  await Session.deleteOne({ userId: user._id });
 
-export const logoutUser = async (refreshToken) => {
-  await Session.deleteOne({ refreshToken });
-};
+  const accessToken = jwt.sign(
+    {
+      userId: user._id,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' },
+  );
 
-const createSession = async (userId) => {
-  const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: '15m',
-  });
-  const refreshToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
-
-  const session = await Session.create({
-    userId,
+  const newSession = await Session.create({
+    userId: user._id,
     accessToken,
-    refreshToken,
-    accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 dakika
-    refreshTokenValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 gün
   });
-  return session;
+
+  return { accessToken: newSession.accessToken };
+};
+
+export const sendResetEmail = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw createHttpError(404, 'User not found!');
+  }
+
+  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+    expiresIn: '5m',
+  });
+  const resetLink = `${process.env.APP_DOMAIN}/reset-password?token=${token}`;
+
+  try {
+    await sendMail({
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: 'Password Reset',
+      html: `<p>Click the link to reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
+    });
+  } catch (error) {
+    console.error('Nodemailer Hata Detayı:', error);
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
+  }
+};
+
+export const resetPassword = async (token, newPassword) => {
+  let email;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    email = decoded.email;
+  } catch (error) {
+    throw createHttpError(401, 'Token is expired or invalid.');
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw createHttpError(404, 'User not found!');
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  await user.save();
+
+  await Session.deleteMany({ userId: user._id });
 };

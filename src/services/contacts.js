@@ -1,56 +1,49 @@
 import Contact from '../db/models/contact.js';
+import {
+  savePhotoToCloudinary,
+  deletePhotoFromCloudinary,
+} from './cloudinary.js';
+import createHttpError from 'http-errors';
 
-export const getAllContacts = async (filter, sort, pagination, userId) => {
-  const { page, perPage } = pagination;
-  const skip = (page - 1) * perPage;
-
-  const contactsQuery = Contact.find({ ...filter, userId })
-    .sort(sort)
-    .skip(skip)
-    .limit(perPage);
-
-  const contacts = await contactsQuery.exec();
-  const totalItems = await Contact.countDocuments({ ...filter, userId });
-  const totalPages = Math.ceil(totalItems / perPage);
-  const hasPreviousPage = page > 1;
-  const hasNextPage = page < totalPages;
-
-  return {
-    data: contacts,
-    page,
-    perPage,
-    totalItems,
-    totalPages,
-    hasPreviousPage,
-    hasNextPage,
-  };
+export const getAllContacts = async (user) => {
+  return await Contact.find({ owner: user._id });
 };
 
-export const getContactById = async (contactId, userId) => {
-  const contact = await Contact.findOne({ _id: contactId, userId });
-  return contact;
+export const getContactById = async (contactId, user) => {
+  return await Contact.findOne({ _id: contactId, owner: user._id });
 };
 
-// Yeni rotalar için gerekli CRUD fonksiyonlarını da eklemelisiniz.
-// Örneğin:
-export const createContact = async (payload, userId) => {
-  const newContact = await Contact.create({ ...payload, userId });
-  return newContact;
-};
-
-export const deleteContact = async (contactId, userId) => {
-  const deletedContact = await Contact.findOneAndDelete({
-    _id: contactId,
-    userId,
+export const createContact = async (payload, userId, file) => {
+  const photoUrl = file ? await savePhotoToCloudinary(file.path) : null;
+  return await Contact.create({
+    ...payload,
+    photo: photoUrl,
+    owner: userId,
   });
-  return deletedContact;
 };
 
-export const updateContact = async (contactId, payload, userId) => {
-  const updatedContact = await Contact.findOneAndUpdate(
-    { _id: contactId, userId },
+export const updateContact = async (contactId, payload, userId, file) => {
+  if (file) {
+    const contact = await Contact.findById(contactId);
+    if (contact && contact.photo) {
+      await deletePhotoFromCloudinary(contact.photo);
+    }
+    payload.photo = await savePhotoToCloudinary(file.path);
+  }
+  return await Contact.findOneAndUpdate(
+    { _id: contactId, owner: userId },
     payload,
     { new: true },
   );
-  return updatedContact;
+};
+
+export const deleteContact = async (contactId, user) => {
+  const contact = await Contact.findOneAndDelete({
+    _id: contactId,
+    owner: user._id,
+  });
+  if (contact && contact.photo) {
+    await deletePhotoFromCloudinary(contact.photo);
+  }
+  return contact;
 };
