@@ -1,34 +1,54 @@
-const express = require('express');
-const cors = require('cors');
-const pino = require('pino-http')();
-const authRouter = require('./routers/auth');
-const contactsRouter = require('./routers/contacts');
-const authenticate = require('./middlewares/authenticate');
-const notFoundHandler = require('./middlewares/notFoundHandler');
-const errorHandler = require('./middlewares/errorHandler');
+import express from 'express';
+import pino from 'pino-http';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import contactsRouter from './routes/contacts.js';
+import authRouter from './routes/auth.js';
 
 const setupServer = () => {
-    const app = express();
+  const app = express();
 
-    app.use(cors());
-    app.use(pino);
-    app.use(express.json());
+  app.use(express.json());
+  app.use(cors());
+  app.use(cookieParser());
+  app.use(
+    pino({
+      transport: {
+        target: 'pino-pretty',
+      },
+    }),
+  );
 
-    app.use('/auth', authRouter);
-    app.use('/contacts', authenticate, contactsRouter);
-
-    // Handle undefined routes
-    app.use(notFoundHandler);
-
-    // Global error handler
-    app.use(errorHandler);
-
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
+  // Rota Yönlendiricileri
+  app.use('/api/contacts', contactsRouter);
+  app.use('/api/auth', authRouter);
+  // Sağlık kontrolü rotası
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'Hello World!',
     });
+  });
+
+  // Hata yönetimi middleware'i
+  app.use((err, req, res, next) => {
+    console.error('API Error:', err.stack); // Hatanın tüm detaylarını loglamak için
+    if (err.status) {
+      return res.status(err.status).json({
+        message: err.message,
+        status: err.status,
+      });
+    }
+    res.status(500).json({ message: 'Something went wrong', status: 500 });
+  });
+
+  app.use((req, res) => {
+    res.status(404).json({ message: 'Not found' });
+  });
+
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 };
 
-module.exports = setupServer;
-
-
+export default setupServer;

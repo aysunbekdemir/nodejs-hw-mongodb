@@ -1,23 +1,24 @@
-const Joi = require('joi');
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
+import bcrypt from 'bcrypt';
 
-const registerSchema = Joi.object({
-    name: Joi.string().min(3).max(30).required(),
-    email: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
-});
-
-const loginSchema = Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
-});
-
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema(
+  {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-}, { timestamps: true });
+  },
+  {
+    timestamps: true,
+  },
+);
 
-const User = mongoose.model('User', userSchema);
+userSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+  next();
+});
 
-module.exports = { User, registerSchema, loginSchema };
+const User = model('users', userSchema);
+
+export default User;

@@ -1,29 +1,56 @@
-const Contact = require('../db/models/Contact');
+import Contact from '../db/models/contact.js';
 
-const fetchAllContacts = async () => {
-    return await Contact.find(); // Veritabanındaki tüm iletişimleri döndür
+export const getAllContacts = async (filter, sort, pagination, userId) => {
+  const { page, perPage } = pagination;
+  const skip = (page - 1) * perPage;
+
+  const contactsQuery = Contact.find({ ...filter, userId })
+    .sort(sort)
+    .skip(skip)
+    .limit(perPage);
+
+  const contacts = await contactsQuery.exec();
+  const totalItems = await Contact.countDocuments({ ...filter, userId });
+  const totalPages = Math.ceil(totalItems / perPage);
+  const hasPreviousPage = page > 1;
+  const hasNextPage = page < totalPages;
+
+  return {
+    data: contacts,
+    page,
+    perPage,
+    totalItems,
+    totalPages,
+    hasPreviousPage,
+    hasNextPage,
+  };
 };
 
-const fetchContactById = async (contactId) => {
-    return await Contact.findById(contactId);
+export const getContactById = async (contactId, userId) => {
+  const contact = await Contact.findOne({ _id: contactId, userId });
+  return contact;
 };
 
-const createContact = async (contactData) => {
-    return await Contact.create(contactData);
+// Yeni rotalar için gerekli CRUD fonksiyonlarını da eklemelisiniz.
+// Örneğin:
+export const createContact = async (payload, userId) => {
+  const newContact = await Contact.create({ ...payload, userId });
+  return newContact;
 };
 
-const updateContact = async (contactId, updateData) => {
-    return await Contact.findByIdAndUpdate(contactId, updateData, { new: true });
+export const deleteContact = async (contactId, userId) => {
+  const deletedContact = await Contact.findOneAndDelete({
+    _id: contactId,
+    userId,
+  });
+  return deletedContact;
 };
 
-const deleteContact = async (contactId) => {
-    return await Contact.findByIdAndDelete(contactId);
-};
-
-module.exports = { 
-    fetchAllContacts, 
-    fetchContactById,
-    createContact,
-    updateContact,
-    deleteContact,
+export const updateContact = async (contactId, payload, userId) => {
+  const updatedContact = await Contact.findOneAndUpdate(
+    { _id: contactId, userId },
+    payload,
+    { new: true },
+  );
+  return updatedContact;
 };
