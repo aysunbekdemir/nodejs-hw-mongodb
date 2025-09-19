@@ -1,0 +1,302 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Adres Defteri Uygulaması",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2-0.html"
+    },
+    "description": "API, kullanıcıların adres defterinde kişileri yönetmesini sağlar.\n"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000"
+    },
+    {
+      "url": "https://your-deployed-site.onrender.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Contacts",
+      "description": "Adres defterindeki kişilerle ilgili işlemler"
+    }
+  ],
+  "paths": {
+    "/contacts": {
+      "get": {
+        "get": {
+          "tags": [
+            "Contacts"
+          ],
+          "summary": "Tüm kişileri listeler",
+          "operationId": "getContacts",
+          "description": "Veritabanında kayıtlı tüm kişileri getirir. Filtreleme ve sayfalama için sorgu parametreleri kullanılabilir.",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "limit",
+              "schema": {
+                "type": "integer"
+              },
+              "description": "Geri dönecek maksimum kişi sayısı"
+            },
+            {
+              "in": "query",
+              "name": "page",
+              "schema": {
+                "type": "integer"
+              },
+              "description": "Hangi sayfanın getirileceği"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Başarılı yanıt. Kişiler listesi döner.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "../../components/schemas/contact.yaml"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Yetkilendirme hatası",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../components/responses/unauthorized.yaml"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "post": {
+          "tags": [
+            "Contacts"
+          ],
+          "summary": "Yeni bir kişi oluşturur",
+          "operationId": "createContact",
+          "description": "Belirtilen verilerle yeni bir kişi kaydı oluşturur.",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "../../components/schemas/contactCreate.yaml"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Kişi başarıyla oluşturuldu",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../components/schemas/contact.yaml"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Geçersiz istek gövdesi",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../components/responses/badRequest.yaml"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contacts/{contactId}": {
+      "get": {
+        "get": {
+          "tags": [
+            "Contacts"
+          ],
+          "summary": "Tek bir kişiyi ID'ye göre getirir",
+          "operationId": "getContactById",
+          "description": "Belirli bir kişinin detaylarını ID'si ile sorgular.",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "contactId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Kişinin benzersiz ID'si"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Başarılı yanıt",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../../components/schemas/contact.yaml"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Kişi bulunamadı",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../../components/responses/notFound.yaml"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "patch": {
+          "tags": [
+            "Contacts"
+          ],
+          "summary": "Kişiyi günceller",
+          "operationId": "updateContact",
+          "description": "Belirtilen ID'ye sahip kişinin bilgilerini günceller. Yalnızca gönderilen alanlar değiştirilir.",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "contactId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Güncellenecek kişinin benzersiz ID'si"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "../../../components/schemas/contactUpdate.yaml"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Başarılı yanıt. Güncellenen kişi nesnesi döner.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../../components/schemas/contact.yaml"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Geçersiz istek",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../../components/responses/badRequest.yaml"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Kişi bulunamadı",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../../components/responses/notFound.yaml"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "delete": {
+          "tags": [
+            "Contacts"
+          ],
+          "summary": "Kişiyi siler",
+          "operationId": "deleteContact",
+          "description": "Belirtilen ID'ye sahip kişiyi veritabanından kalıcı olarak siler.",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "contactId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Silinecek kişinin benzersiz ID'si"
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Kişi başarıyla silindi. İçerik yok yanıtı döner."
+            },
+            "404": {
+              "description": "Kişi bulunamadı",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "../../../components/responses/notFound.yaml"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

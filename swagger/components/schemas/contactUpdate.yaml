@@ -1,0 +1,14 @@
+type: object
+properties:
+  name:
+    type: string
+    description: Güncellenecek kişinin yeni adı.
+  email:
+    type: string
+    format: email
+    description: Güncellenecek kişinin yeni e-posta adresi.
+  phone:
+    type: string
+    description: Güncellenecek kişinin yeni telefon numarası.
+example:
+  name: 'Jane Smith Updated'

@@ -1,0 +1,9 @@
+description: Yetkilendirme hatası
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Lütfen yetkilendirme için token sağlayın.'

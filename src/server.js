@@ -1,54 +1,30 @@
 import express from 'express';
-import pino from 'pino-http';
+import logger from 'morgan';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import contactsRouter from './routes/contacts.js';
-import authRouter from './routes/auth.js';
+import swaggerUi from 'swagger-ui-express';
+import contactsRouter from './routes/api/contacts.js';
+import usersRouter from './routes/api/users.js';
+import swaggerDocument from '../docs/swagger.json' with { type: 'json' };
 
-const setupServer = () => {
-  const app = express();
+const app = express();
+const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short';
 
-  app.use(express.json());
-  app.use(cors());
-  app.use(cookieParser());
-  app.use(
-    pino({
-      transport: {
-        target: 'pino-pretty',
-      },
-    }),
-  );
+app.use(logger(formatsLogger));
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
 
-  // Rota Yönlendiricileri
-  app.use('/api/contacts', contactsRouter);
-  app.use('/api/auth', authRouter);
-  // Sağlık kontrolü rotası
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'Hello World!',
-    });
-  });
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-  // Hata yönetimi middleware'i
-  app.use((err, req, res, next) => {
-    console.error('API Error:', err.stack); // Hatanın tüm detaylarını loglamak için
-    if (err.status) {
-      return res.status(err.status).json({
-        message: err.message,
-        status: err.status,
-      });
-    }
-    res.status(500).json({ message: 'Something went wrong', status: 500 });
-  });
+app.use('/api/contacts', contactsRouter);
+app.use('/api/users', usersRouter);
 
-  app.use((req, res) => {
-    res.status(404).json({ message: 'Not found' });
-  });
+app.use((req, res) => {
+  res.status(404).json({ message: 'Not found' });
+});
 
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-};
+app.use((err, req, res, next) => {
+  res.status(err.status || 500).json({ message: err.message });
+});
 
-export default setupServer;
+export default app;

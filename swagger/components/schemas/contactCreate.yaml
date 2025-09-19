@@ -1,0 +1,20 @@
+type: object
+required:
+  - name
+  - email
+  - phone
+properties:
+  name:
+    type: string
+    description: Yeni kişinin tam adı.
+  email:
+    type: string
+    format: email
+    description: Yeni kişinin e-posta adresi.
+  phone:
+    type: string
+    description: Yeni kişinin telefon numarası.
+example:
+  name: 'Jane Smith'
+  email: 'jane.smith@example.com'
+  phone: '+905559876543'

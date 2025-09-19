@@ -1,0 +1,9 @@
+description: Geçersiz istek verisi
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Geçersiz e-posta formatı.'

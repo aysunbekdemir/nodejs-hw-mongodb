@@ -1,0 +1,9 @@
+description: Kaynak bulunamadı
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Kişi bulunamadı.'

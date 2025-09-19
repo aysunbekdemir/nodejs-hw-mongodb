@@ -1,0 +1,27 @@
+post:
+  tags:
+    - Contacts
+  summary: Yeni bir kişi oluşturur
+  operationId: createContact
+  description: Belirtilen verilerle yeni bir kişi kaydı oluşturur.
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/contactCreate.yaml
+  responses:
+    '201':
+      description: Kişi başarıyla oluşturuldu
+      content:
+        application/json:
+          schema:
+            $ref: ../../components/schemas/contact.yaml
+    '400':
+      description: Geçersiz istek gövdesi
+      content:
+        application/json:
+          schema:
+            $ref: ../../components/responses/badRequest.yaml

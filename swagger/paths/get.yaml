@@ -1,0 +1,34 @@
+get:
+  tags:
+    - Contacts
+  summary: Tüm kişileri listeler
+  operationId: getContacts
+  description: Veritabanında kayıtlı tüm kişileri getirir. Filtreleme ve sayfalama için sorgu parametreleri kullanılabilir.
+  security:
+    - bearerAuth: []
+  parameters:
+    - in: query
+      name: limit
+      schema:
+        type: integer
+      description: Geri dönecek maksimum kişi sayısı
+    - in: query
+      name: page
+      schema:
+        type: integer
+      description: Hangi sayfanın getirileceği
+  responses:
+    '200':
+      description: Başarılı yanıt. Kişiler listesi döner.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../../components/schemas/contact.yaml
+    '401':
+      description: Yetkilendirme hatası
+      content:
+        application/json:
+          schema:
+            $ref: ../../components/responses/unauthorized.yaml

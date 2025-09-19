@@ -2,8 +2,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import createHttpError from 'http-errors';
 
-import User from '../db/models/user.js';
-import Session from '../db/models/session.js';
+import User from '../models/user.js';
+import Session from '../models/session.js';
 import sendMail from './sendMail.js';
 
 export const registerUser = async (payload) => {
@@ -28,7 +28,12 @@ export const loginUser = async (payload) => {
     throw createHttpError(401, 'Invalid credentials');
   }
 
+  console.log("Postman'den gelen şifre:", payload.password);
+  console.log('Veritabanındaki şifre:', user.password);
+
   const passwordMatch = await bcrypt.compare(payload.password, user.password);
+  console.log('bcrypt.compare() karşılaştırma sonucu:', passwordMatch);
+
   if (!passwordMatch) {
     throw createHttpError(401, 'Invalid credentials');
   }

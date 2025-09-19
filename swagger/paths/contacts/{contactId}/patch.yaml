@@ -1,0 +1,40 @@
+patch:
+  tags:
+    - Contacts
+  summary: Kişiyi günceller
+  operationId: updateContact
+  description: Belirtilen ID'ye sahip kişinin bilgilerini günceller. Yalnızca gönderilen alanlar değiştirilir.
+  security:
+    - bearerAuth: []
+  parameters:
+    - in: path
+      name: contactId
+      required: true
+      schema:
+        type: string
+      description: Güncellenecek kişinin benzersiz ID'si
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../../../components/schemas/contactUpdate.yaml
+  responses:
+    '200':
+      description: Başarılı yanıt. Güncellenen kişi nesnesi döner.
+      content:
+        application/json:
+          schema:
+            $ref: ../../../components/schemas/contact.yaml
+    '400':
+      description: Geçersiz istek
+      content:
+        application/json:
+          schema:
+            $ref: ../../../components/responses/badRequest.yaml
+    '404':
+      description: Kişi bulunamadı
+      content:
+        application/json:
+          schema:
+            $ref: ../../../components/responses/notFound.yaml
