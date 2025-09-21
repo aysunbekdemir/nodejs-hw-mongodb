@@ -1,63 +1,39 @@
 import { Router } from 'express';
 import {
-  createContact,
-  getContacts,
-  getContactById,
-  updateContact,
-  deleteContact,
-} from '../services/contacts.js';
-import createHttpError from 'http-errors';
-import isValidId from '../middlewares/isValidId.js';
-import authenticate from '../middlewares/authenticate.js'; // Bu satırı ekleyin
+  getContactsController,
+  getContactByIdController,
+  createContactController,
+  patchContactController,
+  deleteContactController,
+} from '../controllers/contacts.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import { validateBody } from '../middlewares/validateBody.js';
+import { isValidId } from '../middlewares/isValidId.js';
+import { authenticate } from '../middlewares/authenticate.js';
+import { upload } from '../middlewares/upload.js';
+import {
+  createContactSchema,
+  updateContactSchema,
+} from '../validation/contacts.js';
 
-const contactsRouter = Router();
+const router = Router();
 
-// authenticate middleware'ini tüm rotalara ekleyin
-contactsRouter.use(authenticate);
+router.use(authenticate);
 
-contactsRouter.get('/', async (req, res, next) => {
-  try {
-    const contacts = await getContacts();
-    res.json(contacts);
-  } catch (err) {
-    next(createHttpError(500, 'Failed to retrieve contacts'));
-  }
-});
+router.get('/', ctrlWrapper(getContactsController));
 
-contactsRouter.get('/:id', isValidId, async (req, res, next) => {
-  try {
-    const contact = await getContactById(req.params.id);
-    res.json(contact);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get('/:contactId', isValidId, ctrlWrapper(getContactByIdController));
 
-contactsRouter.post('/', async (req, res, next) => {
-  try {
-    const contact = await createContact(req.body);
-    res.status(201).json(contact);
-  } catch (err) {
-    next(createHttpError(500, 'Failed to create contact'));
-  }
-});
+router.post('/', upload.single('photo'), ctrlWrapper(createContactController));
 
-contactsRouter.patch('/:id', isValidId, async (req, res, next) => {
-  try {
-    const contact = await updateContact(req.params.id, req.body);
-    res.json(contact);
-  } catch (err) {
-    next(err);
-  }
-});
+router.patch(
+  '/:contactId',
+  isValidId,
+  // upload.single('photo'),
+  validateBody(updateContactSchema),
+  ctrlWrapper(patchContactController),
+);
 
-contactsRouter.delete('/:id', isValidId, async (req, res, next) => {
-  try {
-    const contact = await deleteContact(req.params.id);
-    res.json(contact);
-  } catch (err) {
-    next(err);
-  }
-});
+router.delete('/:contactId', isValidId, ctrlWrapper(deleteContactController));
 
-export default contactsRouter;
+export default router;

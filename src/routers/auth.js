@@ -1,101 +1,49 @@
 import { Router } from 'express';
-import validateBody from '../middlewares/validateBody.js';
+import {
+  registerUserController,
+  loginUserController,
+  logoutUserController,
+  refreshUserSessionController,
+  requestResetEmailController,
+  resetPasswordController,
+} from '../controllers/auth.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import { validateBody } from '../middlewares/validateBody.js';
 import {
   registerUserSchema,
   loginUserSchema,
-  sendResetEmailSchema,
+  requestResetEmailSchema,
   resetPasswordSchema,
-} from '../schemas/users.js';
-import {
-  registerUser,
-  loginUser,
-  sendResetEmail,
-  resetPassword,
-} from '../services/auth.js';
-import createHttpError from 'http-errors';
+} from '../validation/auth.js';
 
-const authRouter = Router();
+const router = Router();
 
-authRouter.post(
+router.post(
   '/register',
   validateBody(registerUserSchema),
-  async (req, res, next) => {
-    try {
-      const user = await registerUser(req.body);
-      res.status(201).json({
-        status: 201,
-        message: 'Successfully registered a user!',
-        data: user,
-      });
-    } catch (error) {
-      next(createHttpError(409, 'Email already exists'));
-    }
-  },
+  ctrlWrapper(registerUserController),
 );
 
-authRouter.post(
+router.post(
   '/login',
   validateBody(loginUserSchema),
-  async (req, res, next) => {
-    try {
-      const { accessToken } = await loginUser(req.body);
-      res.status(200).json({
-        status: 200,
-        message: 'Successfully logged in!',
-        data: { accessToken },
-      });
-    } catch (error) {
-      next(createHttpError(401, 'Invalid credentials.'));
-    }
-  },
+  ctrlWrapper(loginUserController),
 );
 
-authRouter.post(
+router.post('/logout', ctrlWrapper(logoutUserController));
+
+router.post('/refresh', ctrlWrapper(refreshUserSessionController));
+
+router.post(
   '/send-reset-email',
-  validateBody(sendResetEmailSchema),
-  async (req, res, next) => {
-    try {
-      await sendResetEmail(req.body.email);
-      res.status(200).json({
-        status: 200,
-        message: 'Reset password email has been successfully sent.',
-        data: {},
-      });
-    } catch (error) {
-      if (error.message === 'User not found!') {
-        next(createHttpError(404, 'User not found!'));
-      } else {
-        next(
-          createHttpError(
-            500,
-            'Failed to send the email, please try again later.',
-          ),
-        );
-      }
-    }
-  },
+  validateBody(requestResetEmailSchema),
+  ctrlWrapper(requestResetEmailController),
 );
 
-authRouter.post(
+router.post(
   '/reset-pwd',
   validateBody(resetPasswordSchema),
-  async (req, res, next) => {
-    try {
-      const { token, password } = req.body;
-      await resetPassword(token, password);
-      res.status(200).json({
-        status: 200,
-        message: 'Password has been successfully reset.',
-        data: {},
-      });
-    } catch (error) {
-      if (error.message === 'Token is expired or invalid.') {
-        next(createHttpError(401, 'Token is expired or invalid.'));
-      } else {
-        next(createHttpError(404, 'User not found!'));
-      }
-    }
-  },
+  ctrlWrapper(resetPasswordController),
 );
 
-export default authRouter;
+export default router;

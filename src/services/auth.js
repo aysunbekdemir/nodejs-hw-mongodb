@@ -1,96 +1,144 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import createHttpError from 'http-errors';
+import jwt from 'jsonwebtoken';
 
-import User from '../db/models/user.js';
-import Session from '../db/models/session.js';
-import sendMail from './sendMail.js';
+import { SessionsCollection } from '../db/models/session.js';
+import { UsersCollection } from '../db/models/user.js';
+import { sendEmail } from './email.js';
+import { env } from '../utils/env.js';
 
 export const registerUser = async (payload) => {
-  const userExists = await User.findOne({ email: payload.email });
-  if (userExists) {
-    throw createHttpError(409, 'Email already exists');
-  }
+  const user = await UsersCollection.findOne({ email: payload.email });
+  if (user) throw createHttpError(409, 'Email in use');
 
-  const hashedPassword = await bcrypt.hash(payload.password, 10);
+  const encryptedPassword = await bcrypt.hash(payload.password, 10);
 
-  const newUser = await User.create({
+  return await UsersCollection.create({
     ...payload,
-    password: hashedPassword,
+    password: encryptedPassword,
   });
-
-  return newUser;
 };
 
 export const loginUser = async (payload) => {
-  const user = await User.findOne({ email: payload.email });
+  const user = await UsersCollection.findOne({ email: payload.email });
   if (!user) {
-    throw createHttpError(401, 'Invalid credentials');
+    throw createHttpError(401, 'Unauthorized');
   }
 
-  const passwordMatch = await bcrypt.compare(payload.password, user.password);
-  if (!passwordMatch) {
-    throw createHttpError(401, 'Invalid credentials');
+  const isEqual = await bcrypt.compare(payload.password, user.password);
+  if (!isEqual) {
+    throw createHttpError(401, 'Unauthorized');
   }
 
-  await Session.deleteOne({ userId: user._id });
+  await SessionsCollection.deleteOne({ userId: user._id });
 
-  const accessToken = jwt.sign(
-    {
-      userId: user._id,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' },
-  );
+  const accessToken = randomBytes(30).toString('base64');
+  const refreshToken = randomBytes(30).toString('base64');
 
-  const newSession = await Session.create({
+  return await SessionsCollection.create({
     userId: user._id,
     accessToken,
+    refreshToken,
+    accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+    refreshTokenValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+  });
+};
+
+export const logoutUser = async (refreshToken) => {
+  await SessionsCollection.deleteOne({ refreshToken });
+};
+
+export const refreshUsersSession = async ({ refreshToken }) => {
+  const session = await SessionsCollection.findOne({ refreshToken });
+
+  if (!session) {
+    throw createHttpError(401, 'Session not found');
+  }
+
+  const isSessionTokenExpired =
+    new Date() > new Date(session.refreshTokenValidUntil);
+
+  if (isSessionTokenExpired) {
+    throw createHttpError(401, 'Session token expired');
+  }
+
+  const newSession = await SessionsCollection.findOneAndDelete({
+    _id: session._id,
   });
 
-  return { accessToken: newSession.accessToken };
+  const newAccessToken = randomBytes(30).toString('base64');
+  const newRefreshToken = randomBytes(30).toString('base64');
+
+  return await SessionsCollection.create({
+    userId: newSession.userId,
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+    refreshTokenValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+  });
 };
 
-export const sendResetEmail = async (email) => {
-  const user = await User.findOne({ email });
+export const requestResetToken = async (email) => {
+  const user = await UsersCollection.findOne({ email });
   if (!user) {
     throw createHttpError(404, 'User not found!');
   }
 
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '5m' });
-  const resetLink = `${process.env.APP_DOMAIN}/reset-password?token=${token}`;
+  const resetToken = jwt.sign(
+    {
+      sub: user._id,
+      email,
+    },
+    env('JWT_SECRET'),
+    {
+      expiresIn: '5m',
+    },
+  );
+
+  const resetUrl = `${env('APP_DOMAIN')}/reset-password?token=${resetToken}`;
 
   try {
-    await sendMail({
-      from: process.env.SMTP_FROM,
+    await sendEmail({
+      from: env('SMTP_FROM'),
       to: email,
-      subject: 'Password Reset',
-      html: `<p>Click the link to reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
+      subject: 'Reset your password',
+      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password!</p>`,
     });
-  } catch (error) {
-    console.error('Nodemailer Hata Detayı:', error);
-    throw createHttpError(500, 'Failed to send the email, please try again later.');
+  } catch {
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
   }
 };
 
-export const resetPassword = async (token, newPassword) => {
-  let email;
+export const resetPassword = async (payload) => {
+  let entries;
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    email = decoded.email;
-  } catch (error) {
-    throw createHttpError(401, 'Token is expired or invalid.');
+    entries = jwt.verify(payload.token, env('JWT_SECRET'));
+  } catch (err) {
+    if (err instanceof Error)
+      throw createHttpError(401, 'Token is expired or invalid.');
+    throw err;
   }
 
-  const user = await User.findOne({ email });
+  const user = await UsersCollection.findOne({
+    email: entries.email,
+    _id: entries.sub,
+  });
+
   if (!user) {
     throw createHttpError(404, 'User not found!');
   }
 
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  user.password = hashedPassword;
-  await user.save();
+  const encryptedPassword = await bcrypt.hash(payload.password, 10);
 
-  await Session.deleteMany({ userId: user._id });
+  await UsersCollection.updateOne(
+    { _id: user._id },
+    { password: encryptedPassword },
+  );
+
+  await SessionsCollection.deleteOne({ userId: user._id });
 };
