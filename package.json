@@ -1,9 +1,7 @@
 {
   "name": "nodejs-hw-mongodb",
   "version": "1.0.0",
-  "description": "",
   "main": "src/index.js",
-  "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js"
@@ -11,22 +9,20 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "cloudinary": "^2.2.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "http-errors": "^2.0.0",
-    "joi": "^17.13.1",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.4.1",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.13",
-    "pino-http": "^10.1.0"
+    "dotenv": "^17.2.2",
+    "eslint": "^8.x.x",
+    "express": "^5.1.0",
+    "mongoose": "^8.18.0",
+    "pino": "^9.9.2",
+    "pino-http": "^10.5.0",
+    "pino-pretty": "^13.1.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
-    "pino-pretty": "^11.2.1"
+    "eslint": "^9.34.0",
+    "nodemon": "^2.x.x",
+    "prettier": "^3.6.2"
   }
 }
