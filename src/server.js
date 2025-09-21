@@ -1,30 +1,47 @@
 import express from 'express';
-import logger from 'morgan';
+import pino from 'pino-http';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
-import contactsRouter from './routes/api/contacts.js';
-import usersRouter from './routes/api/users.js';
-import swaggerDocument from '../docs/swagger.json' with { type: 'json' };
+import YAML from 'yamljs';
 
-const app = express();
-const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short';
+import { env } from './utils/env.js';
+import authRouter from './routers/api/auth.js';
+import contactsRouter from './routers/api/contacts.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { notFoundHandler } from './middlewares/notFoundHandler.js';
 
-app.use(logger(formatsLogger));
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+const PORT = Number(env('PORT', '4000'));
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+export const setupServer = () => {
+  const app = express();
 
-app.use('/api/contacts', contactsRouter);
-app.use('/api/users', usersRouter);
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(cors());
+  app.use(cookieParser());
 
-app.use((req, res) => {
-  res.status(404).json({ message: 'Not found' });
-});
+  app.use(
+    pino({
+      transport: {
+        target: 'pino-pretty',
+      },
+    })
+  );
 
-app.use((err, req, res, next) => {
-  res.status(err.status || 500).json({ message: err.message });
-});
+  // Swagger documentation
+  const swaggerDocument = YAML.load('./docs/openapi.yaml');
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-export default app;
+  // API routes
+  app.use('/api/auth', authRouter);
+  app.use('/api/contacts', contactsRouter);
+
+  // Error handlers
+  app.use('*', notFoundHandler);
+  app.use(errorHandler);
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+};

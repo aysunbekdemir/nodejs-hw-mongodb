@@ -1,0 +1,80 @@
+get:
+  tags:
+    - Contacts
+  summary: Get all contacts
+  operationId: getContacts
+  description: Retrieve all contacts for authenticated user
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    - name: perPage
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+  responses:
+    '200':
+      description: Successfully found contacts
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: integer
+                example: 200
+              message:
+                type: string
+                example: 'Successfully found contacts!'
+              data:
+                type: object
+    '401':
+      description: Unauthorized
+
+post:
+  tags:
+    - Contacts
+  summary: Create a new contact
+  operationId: createContact
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          required:
+            - name
+            - phoneNumber
+            - contactType
+          properties:
+            name:
+              type: string
+            phoneNumber:
+              type: string
+            email:
+              type: string
+            contactType:
+              type: string
+              enum: [work, home, personal]
+            isFavourite:
+              type: boolean
+            photo:
+              type: string
+              format: binary
+  responses:
+    '201':
+      description: Successfully created a contact
+    '400':
+      description: Bad request
+    '401':
+      description: Unauthorized

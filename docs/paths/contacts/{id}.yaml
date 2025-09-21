@@ -1,0 +1,82 @@
+get:
+  tags:
+    - Contacts
+  summary: Get contact by ID
+  operationId: getContactById
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: contactId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    '200':
+      description: Successfully found contact
+    '404':
+      description: Contact not found
+    '401':
+      description: Unauthorized
+
+patch:
+  tags:
+    - Contacts
+  summary: Update contact
+  operationId: updateContact
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: contactId
+      in: path
+      required: true
+      schema:
+        type: string
+  requestBody:
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            phoneNumber:
+              type: string
+            email:
+              type: string
+            contactType:
+              type: string
+              enum: [work, home, personal]
+            isFavourite:
+              type: boolean
+            photo:
+              type: string
+              format: binary
+  responses:
+    '200':
+      description: Successfully patched a contact
+    '404':
+      description: Contact not found
+    '401':
+      description: Unauthorized
+
+delete:
+  tags:
+    - Contacts
+  summary: Delete contact
+  operationId: deleteContact
+  security:
+    - bearerAuth: []
+  parameters:
+    - name: contactId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    '204':
+      description: Contact deleted successfully
+    '404':
+      description: Contact not found
+    '401':
+      description: Unauthorized
