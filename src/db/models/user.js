@@ -1,24 +1,31 @@
-import { Schema, model } from 'mongoose';
-import bcrypt from 'bcrypt';
+import { model, Schema } from 'mongoose';
 
-const userSchema = new Schema(
+const usersSchema = new Schema(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    name: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
+    versionKey: false,
   },
 );
 
-userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-  next();
-});
+usersSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
+};
 
-const User = model('users', userSchema);
-
-export default User;
+export const UsersCollection = model('users', usersSchema);
